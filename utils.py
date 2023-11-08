@@ -26,9 +26,9 @@ else:
     annotator_ckpts_path = str(Path(here, "./ckpts"))
 
 MAX_RESOLUTION=2048 #Who the hell feed 4k images to ControlNet?
-HF_MODEL_NAME = "lllyasviel/Annotators"
-DWPOSE_MODEL_NAME = "yzd-v/DWPose"
-ANIFACESEG_MODEL_NAME = "bdsqlsz/qinglong_controlnet-lllite" 
+HF_MODEL_NAME = f"{annotator_ckpts_path}/lllyasviel/Annotators"
+DWPOSE_MODEL_NAME = f"{annotator_ckpts_path}/yzd-v/DWPose"
+ANIFACESEG_MODEL_NAME = f"{annotator_ckpts_path}/bdsqlsz/qinglong_controlnet-lllite" 
 
 
 def common_annotator_call(model, tensor_image, input_batch=False, **kwargs):
