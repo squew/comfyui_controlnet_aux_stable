@@ -21,7 +21,7 @@ from .types import PoseResult, HandResult, FaceResult
 from huggingface_hub import hf_hub_download
 from .wholebody import Wholebody # DW Pose
 import warnings
-from ..util import HWC3, resize_image_with_pad, common_input_validate, annotator_ckpts_path, custom_hf_download
+from controlnet_aux.util import HWC3, resize_image_with_pad, common_input_validate, annotator_ckpts_path, custom_hf_download
 import cv2
 from PIL import Image
 
@@ -162,9 +162,9 @@ class DwposeDetector:
         det_filename = det_filename or "yolox_l.onnx"
         pose_filename = pose_filename or "dw-ll_ucoco_384.onnx"
         det_model_repo = pretrained_model_or_path if det_filename == "yolox_l.onnx" else "hr16/yolox-onnx"
+        pose_model_repo = pretrained_model_or_path if pose_filename == "dw-ll_ucoco_384.onnx" else "hr16/UnJIT-DWPose"
         det_model_path = custom_hf_download(det_model_repo, det_filename, cache_dir=cache_dir)
-        pose_model_path = custom_hf_download(pretrained_model_or_path, pose_filename, cache_dir=cache_dir)
-
+        pose_model_path = custom_hf_download(pose_model_repo, pose_filename, cache_dir=cache_dir)
         return cls(Wholebody(det_model_path, pose_model_path))
 
     def detect_poses(self, oriImg) -> List[PoseResult]:
