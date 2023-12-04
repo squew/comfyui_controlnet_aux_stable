@@ -32,15 +32,24 @@ All credit & copyright goes to https://github.com/lllyasviel.
 * Caching DWPose Onnxruntime during the first use of DWPose node instead of ComfyUI startup
 * Added alternative YOLOX models for faster speed when using DWPose
 * Added alternative DWPose models
-
+* Implemented the preprocessor for [AnimalPose ControlNet](https://github.com/abehonest/ControlNet_AnimalPose/tree/main). Check [Animal Pose AP-10K](#animal-pose-ap-10k) 
+* Added YOLO-NAS models which are drop-in replacements of YOLOX
+* Fixed Openpose Face/Hands no longer detecting: https://github.com/Fannovel16/comfyui_controlnet_aux/issues/54
+* Added TorchScript implementation of DWPose and AnimalPose
 # Q&A:
-* Why some nodes doesn't appear after I installed this repo?
+## Why some nodes doesn't appear after I installed this repo?
 
 This repo has a new mechanism which will skip any custom node can't be imported. If you meet this case, please create a issue on [Issues tab](https://github.com/Fannovel16/comfyui_controlnet_aux/issues) with the log from the command line.
 
-* DWPose only uses CPU so it's so slow. How can I make it use GPU?
+## DWPose/AnimalPose only uses CPU so it's so slow. How can I make it use GPU?
+There are two ways to speed-up DWPose: using TorchScript checkpoints (.torchscript.pt) checkpoints or ONNXRuntime (.onnx). TorchScript way is little bit slower than ONNXRuntime but doesn't require any additional library and still way way faster than CPU. 
 
-You can install onnxruntime-gpu. If successful, it will replace default cv2 backend to take advantage of GPU. Note that if you are using NVidia card, this method currently can only works on CUDA 11.8 (ComfyUI_windows_portable_nvidia_cu118_or_cpu.7z) unless you compile onnxruntime yourself
+A torchscript bbox detector is compatiable with an onnx pose estimator and vice versa.
+### TorchScript
+Set `bbox_detector` and `pose_estimator` according to this picture. You can try other bbox detector endings with `.torchscript.pt` to reduce bbox detection time if input images are ideal.
+![](./example_torchscript.png)
+### ONNXRuntime
+If onnxruntime is installed successfully and the checkpoint used endings with `.onnx`, it will replace default cv2 backend to take advantage of GPU. Note that if you are using NVidia card, this method currently can only works on CUDA 11.8 (ComfyUI_windows_portable_nvidia_cu118_or_cpu.7z) unless you compile onnxruntime yourself.
 
 1. Know your onnxruntime build:
 * * NVidia/AMD GPU: `onnxruntime-gpu`
@@ -53,6 +62,7 @@ Note that if this is your first time using ComfyUI, please test if it can run on
 
 3. Run `install.bat` or pip command mentioned in Installation
 
+![](./example_onnx.png)
 # Installation:
 ## Using ComfyUI Manager (recommended):
 Install [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) and do steps introduced there to install this repo.
@@ -98,18 +108,34 @@ You need to use its node directly to set thresholds.
 * Zoe - Depth Map
 
 ## Faces and Poses
-* DWPose Pose Recognition
-* OpenPose Pose Recognition
+* DWPose Pose Estimation
+* OpenPose Pose Estimation
 * MediaPipe Face Mesh
+* Animal Pose Estimation
 
-You can get [OpenPose-format JSON](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md#json-output-format) from DWPose and OpenPose through two ways
+An array of [OpenPose-format JSON](https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/02_output.md#json-output-format) corresponsding to each frame in an IMAGE batch can be gotten from DWPose and OpenPose using `app.nodeOutputs` on the UI or `/history` API endpoint. JSON output from AnimalPose uses a kinda similar format to OpenPose JSON:
+```
+[
+    {
+        "version": "ap10k",
+        "animals": [
+            [[x1, y1, 1], [x2, y2, 1],..., [x17, y17, 1]],
+            [[x1, y1, 1], [x2, y2, 1],..., [x17, y17, 1]],
+            ...
+        ],
+        "canvas_height": 512,
+        "canvas_width": 768
+    },
+    ...
+]
+```
 
 For extension developers (e.g. Openpose editor):
 ```js
-const poseNodes = app.graph._nodes.filter(node => ["OpenposePreprocessor", "DWPreprocessor"].includes(node.type))
+const poseNodes = app.graph._nodes.filter(node => ["OpenposePreprocessor", "DWPreprocessor", "AnimalPosePreprocessor"].includes(node.type))
 for (const poseNode of poseNodes) {
-    const openpose = JSON.parse(app.nodeOutputs[poseNode.id].openpose_json[0])
-    console.log(openpose)
+    const openposeResults = JSON.parse(app.nodeOutputs[poseNode.id].openpose_json[0])
+    console.log(openposeResults) //An array containing Openpose JSON for each frame
 }
 ```
 
@@ -123,8 +149,8 @@ async function main() {
     history = history[promptId]
     const nodeOutputs = Object.values(history.outputs).filter(output => output.openpose_json)
     for (const nodeOutput of nodeOutputs) {
-        const openpose = JSON.parse(nodeOutput.openpose_json[0])
-        console.log(openpose)
+        const openposeResults = JSON.parse(nodeOutput.openpose_json[0])
+        console.log(openposeResults) //An array containing Openpose JSON for each frame
     }
 }
 main()
@@ -146,7 +172,7 @@ for o in history['outputs']:
     for node_id in history['outputs']:
         node_output = history['outputs'][node_id]
         if 'openpose_json' in node_output:
-            print(json.loads(node_output['openpose_json'][0]))
+            print(json.loads(node_output['openpose_json'][0])) #An list containing Openpose JSON for each frame
 ```
 ## Semantic Segmentation
 * OneFormer ADE20K Segmentor
@@ -183,6 +209,9 @@ Credit to https://huggingface.co/thibaud/controlnet-sd21. You can get the same k
 ### OpenPose
 ![](https://huggingface.co/thibaud/controlnet-sd21/resolve/main/example_openpose.png)
 ![](https://huggingface.co/thibaud/controlnet-sd21/resolve/main/example_openposev2.png)
+
+### Animal Pose (AP-10K)
+![](./example_animal_pose.png)
 
 ## Semantic Segmantation
 ### OneFormer ADE20K Segmentor
