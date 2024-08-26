@@ -1,10 +1,9 @@
 # this is an example for config.yaml file, you can rename it to config.yaml if you want to use it
 # ###############################################################################################
 # you can also use absolute paths like: "/root/ComfyUI/custom_nodes/comfyui_controlnet_aux/ckpts" or "D:\\comfyui\\custom_nodes\\comfyui_controlnet_aux\\ckpts"
-annotator_ckpts_path: "./ckpts"
+annotator_ckpts_path: "C:\\SDXL2\\Data\\Models\\ControlNet"
 # ###############################################################################################
 # if you already have downloaded ckpts via huggingface hub into default cache path like: ~/.cache/huggingface/hub, you can set this True to use symlinks to save space
-USE_SYMLINKS: False
 # ###############################################################################################
 # EP_list is a list of execution providers for onnxruntime, if one of them is not available or not working well, you can delete that provider from here(config.yaml)
 # you can find all available providers here: https://onnxruntime.ai/docs/execution-providers
@@ -12,4 +11,11 @@ USE_SYMLINKS: False
 # empty list or only keep ["CPUExecutionProvider"] means you use cv2.dnn.readNetFromONNX to load onnx models
 # if your onnx models can only run on the CPU or have other issues, we recommend using pt model instead.
 # default value is ["CUDAExecutionProvider", "DirectMLExecutionProvider", "OpenVINOExecutionProvider", "ROCMExecutionProvider", "CPUExecutionProvider"]
-EP_list: ["CUDAExecutionProvider", "DirectMLExecutionProvider", "OpenVINOExecutionProvider", "ROCMExecutionProvider", "CPUExecutionProvider"]
+EP_list:
+  [
+    "CUDAExecutionProvider",
+    "DirectMLExecutionProvider",
+    "OpenVINOExecutionProvider",
+    "ROCMExecutionProvider",
+    "CPUExecutionProvider",
+  ]
